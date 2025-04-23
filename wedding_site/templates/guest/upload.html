@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="text-center mb-5">
+            <h1 class="wedding-title">Share Your Wish</h1>
+            <p class="lead">Upload a photo and leave a message for the couple</p>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-body p-4">
+                {% if storage_warning %}
+                <div class="alert alert-warning">
+                    <strong>Storage is running low!</strong> Please upload smaller images if possible.
+                </div>
+                {% endif %}
+
+                {% if has_uploaded %}
+                <div class="alert alert-info">
+                    <strong>You've already shared a photo!</strong> You can update it below if you wish.
+                </div>
+
+                <div class="text-center mb-4">
+                    <img src="{{ existing_photo.image.url }}" alt="Your uploaded photo" class="img-fluid rounded"
+                        style="max-height: 300px;">
+                    {% if existing_photo.message %}
+                    <div class="mt-3 p-3" style="background-color: var(--old-rose-light); border-radius: 10px;">
+                        <p class="mb-0">{{ existing_photo.message }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.image.id_for_label }}"
+                            class="form-label">{{ has_uploaded|yesno:"Update your photo,Upload a photo" }}</label>
+                        {{ form.image }}
+                        {% if form.image.errors %}
+                        <div class="text-danger">
+                            {{ form.image.errors }}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Maximum file size: 5MB. Recommended dimensions: 1200x1200px.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.message.id_for_label }}" class="form-label">Your Message (Optional)</label>
+                        {{ form.message }}
+                        {% if form.message.errors %}
+                        <div class="text-danger">
+                            {{ form.message.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg px-5">
+                            {{ has_uploaded|yesno:"Update,Upload" }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <p>Thank you for sharing your love and best wishes with the couple!</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
