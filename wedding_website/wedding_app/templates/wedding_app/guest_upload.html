@@ -1,0 +1,65 @@
+<!-- templates/wedding_app/guest_upload.html -->
+{% extends 'wedding_app/base.html' %}
+
+{% block content %}
+<div class="card">
+    <h2>Share Your Memory</h2>
+    <p>Upload a photo and optional message</p>
+    
+    {% if has_uploaded %}
+        <div class="uploaded-photo" style="margin: 40px 0;">
+            <h3 style="margin-bottom: 15px; font-size: 1.4rem; color: var(--old-rose);">YOUR PHOTO</h3>
+            <div style="padding: 20px; background-color: var(--light-gray); margin-bottom: 25px;">
+                <img src="{{ photo.image.url }}" alt="Your uploaded photo" style="max-width: 100%; max-height: 400px; display: block; margin: 0 auto;">
+            </div>
+            
+            {% if photo.message %}
+                <div class="message-box" style="padding: 20px; border: 1px solid rgba(192,128,129,0.3); margin: 25px 0; background-color: var(--old-rose-ultra-light);">
+                    <h4 style="margin-bottom: 10px; color: var(--old-rose); font-size: 1.2rem;">YOUR MESSAGE</h4>
+                    <p style="color: var(--dark-gray); font-size: 0.95rem; line-height: 1.7;">{{ photo.message }}</p>
+                </div>
+            {% endif %}
+            
+            <p style="color: var(--medium-gray); margin: 20px 0; font-size: 0.9rem;">YOU CAN UPDATE YOUR SUBMISSION BELOW</p>
+        </div>
+    {% endif %}
+    
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="id_image">PHOTO</label>
+            {{ form.image }}
+            {% if form.image.errors %}
+                <div class="error-message">{{ form.image.errors }}</div>
+            {% endif %}
+            <small style="color: var(--medium-gray); display: block; margin-top: 8px; font-size: 0.8rem;">Please upload an image file (JPG, PNG, etc.)</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="id_message">MESSAGE (OPTIONAL)</label>
+            {{ form.message }}
+            {% if form.message.errors %}
+                <div class="error-message">{{ form.message.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <button type="submit" class="btn">
+            {% if has_uploaded %}UPDATE{% else %}UPLOAD{% endif %}
+        </button>
+    </form>
+    
+    {% if storage_info %}
+        <div class="storage-info {% if storage_info.is_warning %}storage-warning{% endif %}">
+            <h4 style="margin-bottom: 15px; font-size: 0.9rem; letter-spacing: 0.1em; color: var(--old-rose);">STORAGE USAGE</h4>
+            <p style="margin-bottom: 12px; font-size: 0.9rem;">{{ storage_info.current_usage_mb }} MB / {{ storage_info.max_storage_mb }} MB ({{ storage_info.percentage }}%)</p>
+            <div class="storage-bar">
+                <div class="storage-fill" style="width: {{ storage_info.percentage }}%;"></div>
+            </div>
+            {% if storage_info.is_warning %}
+                <p style="color: #f0ad4e; margin-top: 12px; font-size: 0.8rem; letter-spacing: 0.05em;">STORAGE SPACE IS RUNNING LOW</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

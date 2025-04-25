@@ -1,0 +1,782 @@
+<!-- templates/wedding_app/couple_view.html -->
+{% extends 'wedding_app/base.html' %}
+
+{% block extra_head %}
+<style>
+    .gallery-container {
+        position: relative;
+        min-height: 600px;
+        margin-bottom: 120px;
+    }
+
+    .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        grid-gap: 30px;
+        margin-bottom: 150px;
+    }
+
+    .photo-item {
+        position: relative;
+        height: 250px;
+        background-color: var(--light-gray);
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.4s ease, box-shadow 0.4s ease;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .photo-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .photo-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: all 0.5s ease;
+    }
+
+    .photo-item:hover img {
+        transform: scale(1.03);
+    }
+
+    .photo-item::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 40%;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.3), transparent);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .photo-item:hover::after {
+        opacity: 1;
+    }
+
+    .photo-item.viewed::before {
+        content: "✓";
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 20px;
+        height: 20px;
+        background-color: var(--old-rose);
+        color: var(--white);
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+    }
+
+    .photo-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.5s ease;
+    }
+
+    .photo-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+    }
+
+    .photo-modal {
+        position: relative;
+        width: 90%;
+        max-width: 900px;
+        background-color: var(--white);
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .photo-overlay.active .photo-modal {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .photo-modal-image-container {
+        width: 100%;
+        background-color: var(--light-gray);
+        position: relative;
+        padding: 40px;
+    }
+
+    .photo-modal-image {
+        width: 100%;
+        max-height: 70vh;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .photo-modal-content {
+        padding: 30px 40px;
+    }
+
+    .photo-modal-title {
+        font-family: 'Cormorant Garamond', serif;
+        color: var(--old-rose);
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+        font-weight: 300;
+        letter-spacing: 0.05em;
+    }
+
+    .photo-modal-message {
+        margin-top: 25px;
+        padding: 25px;
+        background-color: var(--old-rose-ultra-light);
+        border: 1px solid rgba(192, 128, 129, 0.2);
+        color: var(--dark-gray);
+        font-size: 0.95rem;
+        line-height: 1.7;
+        letter-spacing: 0.02em;
+    }
+
+    .photo-modal-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background-color: transparent;
+        color: var(--dark-gray);
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        width: 40px;
+        height: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        font-size: 18px;
+        z-index: 10;
+        transition: all 0.3s ease;
+    }
+
+    .photo-modal-close:hover {
+        background-color: var(--old-rose);
+        color: var(--white);
+        border-color: var(--old-rose);
+    }
+
+    /* Enhanced Heart Container and Animations */
+    .heart-container {
+        position: fixed;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 180px;
+        height: 180px;
+        z-index: 100;
+        filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.5));
+        transition: filter 0.5s ease;
+    }
+
+    /* Heart glow effect */
+    .heart-container.high-completion {
+        filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.8));
+        animation: heartbeat 1.5s ease-in-out infinite;
+    }
+
+    @keyframes heartbeat {
+        0% {
+            transform: translateX(-50%) scale(1);
+            filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.7));
+        }
+
+        15% {
+            transform: translateX(-50%) scale(1.05);
+            filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.9));
+        }
+
+        30% {
+            transform: translateX(-50%) scale(1);
+            filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.7));
+        }
+
+        45% {
+            transform: translateX(-50%) scale(1.05);
+            filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.9));
+        }
+
+        60% {
+            transform: translateX(-50%) scale(1);
+            filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.7));
+        }
+
+        100% {
+            transform: translateX(-50%) scale(1);
+            filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.7));
+        }
+    }
+
+    .heart-svg {
+        width: 100%;
+        height: 100%;
+        filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.5));
+    }
+
+    .heart-fill {
+        fill: #ff0000;
+        /* Pure red */
+        transition: all 0.8s ease;
+        transform-origin: center;
+        opacity: 0.95;
+    }
+
+    /* Glowing effect for heart fill */
+    .heart-container.high-completion .heart-fill {
+        animation: glow 3s infinite alternate;
+        fill: #ff0000;
+    }
+
+    @keyframes glow {
+        0% {
+            fill: #ff0000;
+            filter: brightness(1);
+        }
+
+        100% {
+            fill: #ff3333;
+            filter: brightness(1.2);
+        }
+    }
+
+    .heart-bg {
+        fill: rgba(255, 0, 0, 0.2);
+        stroke: #ff3333;
+        stroke-width: 1;
+        transition: all 0.5s ease;
+    }
+
+    .heart-container.high-completion .heart-bg {
+        stroke-width: 1.5;
+        stroke: #ff5555;
+        animation: pulse-stroke 2s infinite alternate;
+    }
+
+    @keyframes pulse-stroke {
+        0% {
+            stroke-width: 1.5;
+        }
+
+        100% {
+            stroke-width: 2.5;
+        }
+    }
+
+    .heart-text {
+        font-family: 'Montserrat', sans-serif;
+        fill: white;
+        font-size: 14px;
+        text-anchor: middle;
+        letter-spacing: 0.1em;
+        font-weight: bold;
+        text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+    }
+
+    .heart-container.high-completion .heart-text {
+        animation: pulse-text 2s infinite alternate;
+    }
+
+    @keyframes pulse-text {
+        0% {
+            font-size: 14px;
+            text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+        }
+
+        100% {
+            font-size: 16px;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+        }
+    }
+
+    /* Floating hearts when near completion */
+    .falling-hearts-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 90;
+        overflow: hidden;
+        display: none;
+    }
+
+    .falling-hearts-container.active {
+        display: block;
+    }
+
+    /* Falling hearts colors update */
+    .falling-heart {
+        position: absolute;
+        color: #e94057;
+        /* Match the new heart red color */
+        opacity: 0;
+        animation: fall linear forwards;
+    }
+
+    @keyframes fall {
+        0% {
+            transform: translateY(-5vh) rotate(0deg);
+            opacity: 0;
+        }
+
+        10% {
+            opacity: 1;
+        }
+
+        90% {
+            opacity: 1;
+        }
+
+        100% {
+            transform: translateY(105vh) rotate(360deg);
+            opacity: 0;
+        }
+    }
+
+    .floating-photo {
+        position: absolute;
+        width: 120px;
+        height: 120px;
+        background-color: var(--white);
+        overflow: hidden;
+        opacity: 0;
+        transform: scale(0.5);
+        transition: transform 1s ease, opacity 1s ease;
+        z-index: 5;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .floating-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .floating-photo.animate {
+        animation: floatToHeart 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes floatToHeart {
+        0% {
+            transform: scale(1) translate(0, 0);
+            opacity: 1;
+        }
+
+        80% {
+            opacity: 0.8;
+        }
+
+        100% {
+            transform: scale(0.2) translate(var(--tx), var(--ty));
+            opacity: 0;
+        }
+    }
+
+    .gallery-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 40px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        color: var(--medium-gray);
+        margin-bottom: 5px;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+    }
+
+    .stat-value {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 2.5rem;
+        color: var(--old-rose);
+        font-weight: 300;
+    }
+
+    /* Enhanced Mobile Responsiveness */
+    @media (max-width: 768px) {
+        .photo-grid {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-gap: 15px;
+        }
+
+        .photo-item {
+            height: 150px;
+        }
+
+        .heart-container {
+            width: 150px;
+            height: 150px;
+        }
+
+        .photo-modal-image-container {
+            padding: 20px;
+        }
+
+        .photo-modal-content {
+            padding: 20px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .photo-grid {
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            grid-gap: 10px;
+        }
+
+        .photo-item {
+            height: 120px;
+        }
+
+        .gallery-stats {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-item {
+            margin-bottom: 15px;
+        }
+
+        .heart-container {
+            width: 120px;
+            height: 120px;
+            bottom: 30px;
+        }
+
+        .photo-modal-close {
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+        }
+
+        .photo-modal-title {
+            font-size: 1.4rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>YOUR GALLERY</h2>
+    <p>Memories shared by your guests</p>
+
+    <div class="gallery-stats">
+        <div class="stat-item">
+            <div class="stat-label">TOTAL PHOTOS</div>
+            <div class="stat-value" id="total-photos">{{ total_photos }}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">VIEWED</div>
+            <div class="stat-value" id="viewed-photos">{{ viewed_photos }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="gallery-container">
+    <div class="photo-grid" id="photo-grid">
+        {% for photo in photos %}
+        <div class="photo-item {% if photo.is_viewed %}viewed{% endif %}" data-id="{{ photo.id }}"
+            data-viewed="{{ photo.is_viewed|lower }}">
+            <img src="{{ photo.image.url }}" alt="Photo from {{ photo.user.first_name }} {{ photo.user.last_name }}">
+        </div>
+        {% empty %}
+        <p style="color: var(--medium-gray); text-align: center; grid-column: 1/-1; padding: 40px;">No photos have been
+            uploaded yet.</p>
+        {% endfor %}
+    </div>
+
+    <div class="heart-container" id="heart-container">
+        <svg class="heart-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <!-- Glowing filter -->
+            <defs>
+                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
+                    <feMerge>
+                        <feMergeNode in="coloredBlur" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+            </defs>
+
+            <!-- Rounder heart shape path with filter -->
+            <path class="heart-bg"
+                d="M50,90 C50,90 90,65 90,30 C90,10 75,5 50,25 C25,5 10,10 10,30 C10,65 50,90 50,90 Z"
+                filter="url(#glow)" />
+
+            <!-- Heart fill with clip-path for animation -->
+            <clipPath id="heart-clip">
+                <path d="M50,90 C50,90 90,65 90,30 C90,10 75,5 50,25 C25,5 10,10 10,30 C10,65 50,90 50,90 Z" />
+            </clipPath>
+            <rect class="heart-fill" x="0" y="0" width="100" height="100" clip-path="url(#heart-clip)"
+                style="transform: translateY(100%);" filter="url(#glow)" />
+
+            <!-- Text in the heart -->
+            <text class="heart-text" x="50" y="60">
+                <tspan id="heart-percentage">0%</tspan>
+            </text>
+        </svg>
+    </div>
+
+    <!-- Container for falling hearts -->
+    <div class="falling-hearts-container" id="falling-hearts-container"></div>
+</div>
+
+<div class="photo-overlay" id="photo-overlay">
+    <div class="photo-modal">
+        <button class="photo-modal-close" id="modal-close">&times;</button>
+        <div class="photo-modal-image-container">
+            <img class="photo-modal-image" id="modal-image" src="" alt="">
+        </div>
+        <div class="photo-modal-content">
+            <h3 class="photo-modal-title" id="modal-title"></h3>
+            <div class="photo-modal-message" id="modal-message"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const photoGrid = document.getElementById('photo-grid');
+        const photoOverlay = document.getElementById('photo-overlay');
+        const modalClose = document.getElementById('modal-close');
+        const modalImage = document.getElementById('modal-image');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const heartFill = document.querySelector('.heart-fill');
+        const heartPercentage = document.getElementById('heart-percentage');
+        const viewedPhotosCount = document.getElementById('viewed-photos');
+        const totalPhotosCount = document.getElementById('total-photos');
+        const heartContainer = document.getElementById('heart-container');
+        const fallingHeartsContainer = document.getElementById('falling-hearts-container');
+
+        // Calculate initial heart fill percentage
+        const totalPhotos = parseInt(totalPhotosCount.textContent);
+        const viewedPhotos = parseInt(viewedPhotosCount.textContent);
+        const initialPercentage = totalPhotos > 0 ? (viewedPhotos / totalPhotos) * 100 : 0;
+        updateHeartFill(initialPercentage);
+
+        // Check if we should activate special effects
+        checkHeartEffects(initialPercentage);
+
+        // Add click event to photo items
+        const photoItems = document.querySelectorAll('.photo-item');
+        photoItems.forEach(item => {
+            item.addEventListener('click', function () {
+                const photoId = this.dataset.id;
+                const isViewed = this.dataset.viewed === 'true';
+
+                // Get photo details
+                const img = this.querySelector('img');
+                modalImage.src = img.src;
+                modalMessage.style.display = 'none';
+                modalTitle.textContent = 'Loading...';
+
+                // Show the photo in modal
+                photoOverlay.classList.add('active');
+
+                // Fetch photo details from API
+                fetch(`/api/photos`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const photo = data.find(p => p.id == photoId);
+                        if (photo) {
+                            modalTitle.textContent = `${photo.user_first_name} ${photo.user_last_name}`;
+
+                            if (photo.message) {
+                                modalMessage.innerHTML = `<p>${photo.message}</p>`;
+                                modalMessage.style.display = 'block';
+                            } else {
+                                modalMessage.textContent = 'No message attached.';
+                                modalMessage.style.display = 'block';
+                            }
+                        }
+                    });
+
+                // Mark as viewed
+                if (!isViewed) {
+                    fetch(`/api/photos/${photoId}/view`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Update counts and heart fill
+                                viewedPhotosCount.textContent = data.viewed_photos;
+                                updateHeartFill(data.heart_fill_percentage);
+
+                                // Check if we should activate special effects
+                                checkHeartEffects(data.heart_fill_percentage);
+
+                                // Mark as viewed
+                                this.dataset.viewed = 'true';
+                                this.classList.add('viewed');
+
+                                // Create floating photo animation
+                                const rect = this.getBoundingClientRect();
+                                const heartRect = document.querySelector('.heart-container').getBoundingClientRect();
+
+                                const floatingPhoto = document.createElement('div');
+                                floatingPhoto.className = 'floating-photo';
+                                floatingPhoto.innerHTML = `<img src="${img.src}" alt="">`;
+                                floatingPhoto.style.top = `${rect.top}px`;
+                                floatingPhoto.style.left = `${rect.left}px`;
+                                floatingPhoto.style.width = `${rect.width}px`;
+                                floatingPhoto.style.height = `${rect.height}px`;
+
+                                // Calculate target coordinates (center of heart)
+                                const tx = (heartRect.left + heartRect.width / 2) - (rect.left + rect.width / 2);
+                                const ty = (heartRect.top + heartRect.height / 2) - (rect.top + rect.height / 2);
+
+                                floatingPhoto.style.setProperty('--tx', `${tx}px`);
+                                floatingPhoto.style.setProperty('--ty', `${ty}px`);
+
+                                document.body.appendChild(floatingPhoto);
+
+                                // Start animation after a small delay
+                                setTimeout(() => {
+                                    floatingPhoto.style.opacity = '1';
+                                    floatingPhoto.style.transform = 'scale(1)';
+
+                                    setTimeout(() => {
+                                        floatingPhoto.classList.add('animate');
+
+                                        // Remove element after animation
+                                        setTimeout(() => {
+                                            floatingPhoto.remove();
+                                        }, 2500);
+                                    }, 500);
+                                }, 100);
+                            }
+                        });
+                }
+            });
+        });
+
+        // Close modal
+        modalClose.addEventListener('click', function () {
+            photoOverlay.classList.remove('active');
+        });
+
+        // Close modal when clicking outside
+        photoOverlay.addEventListener('click', function (e) {
+            if (e.target === photoOverlay) {
+                photoOverlay.classList.remove('active');
+            }
+        });
+
+        // Update heart fill visualization
+        function updateHeartFill(percentage) {
+            const y = 100 - percentage;  // Start fill from bottom
+            heartFill.style.transform = `translateY(${y}%)`;
+            heartPercentage.textContent = `${Math.round(percentage)}%`;
+        }
+
+        // Check if we should activate special heart effects
+        function checkHeartEffects(percentage) {
+            if (percentage >= 80) {
+                // Add special effects class to heart container
+                heartContainer.classList.add('high-completion');
+
+                // Create falling hearts
+                if (!fallingHeartsContainer.classList.contains('active')) {
+                    fallingHeartsContainer.classList.add('active');
+                    createFallingHearts();
+                }
+            } else {
+                // Remove special effects
+                heartContainer.classList.remove('high-completion');
+                fallingHeartsContainer.classList.remove('active');
+                fallingHeartsContainer.innerHTML = '';
+            }
+        }
+
+        // Create falling hearts animation
+        function createFallingHearts() {
+            // Clear any existing hearts
+            fallingHeartsContainer.innerHTML = '';
+
+            // heart symbols to use
+            const heartSymbols = ['❤', '♥'];
+
+            // Create 40 hearts
+            for (let i = 0; i < 40; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'falling-heart';
+
+                // Randomize heart properties
+                const size = Math.floor(Math.random() * 20) + 10; // 10-30px
+                const left = Math.floor(Math.random() * 100); // 0-100%
+                const duration = Math.floor(Math.random() * 8) + 6; // 6-14s
+                const delay = Math.floor(Math.random() * 10); // 0-10s
+                const symbol = heartSymbols[Math.floor(Math.random() * heartSymbols.length)];
+                const opacity = (Math.random() * 0.7) + 0.3; // 0.3-1.0
+
+                // Set heart styles
+                heart.style.left = `${left}%`;
+                heart.style.fontSize = `${size}px`;
+                heart.style.animationDuration = `${duration}s`;
+                heart.style.animationDelay = `${delay}s`;
+                heart.style.opacity = opacity;
+                heart.textContent = symbol;
+
+                // Add to container
+                fallingHeartsContainer.appendChild(heart);
+            }
+        }
+
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %}

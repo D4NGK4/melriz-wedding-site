@@ -1,0 +1,334 @@
+<!-- templates/wedding_app/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Wedding Photo Gallery</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap"
+            rel="stylesheet">
+        <style>
+            :root {
+                --old-rose: #c08081;
+                --old-rose-light: #e0b2b3;
+                --old-rose-dark: #a06060;
+                --old-rose-ultra-light: #f8e9e9;
+                --cream: #f8f4e3;
+                --off-white: #fefbf6;
+                --light-gray: #f0f0f0;
+                --medium-gray: #9a9a9a;
+                --dark-gray: #484848;
+                --charcoal: #333333;
+                --white: #ffffff;
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Montserrat', sans-serif;
+                background-color: var(--off-white);
+                color: var(--dark-gray);
+                line-height: 1.6;
+                letter-spacing: 0.02em;
+            }
+
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6 {
+                font-family: 'Cormorant Garamond', serif;
+                font-weight: 400;
+                letter-spacing: 0.05em;
+                color: var(--old-rose-dark);
+            }
+
+            .container {
+                width: 90%;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 40px 20px;
+            }
+
+            .header {
+                text-align: center;
+                padding: 60px 0 40px;
+                position: relative;
+            }
+
+            .header::after {
+                content: "";
+                position: absolute;
+                bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 60px;
+                height: 1px;
+                background-color: var(--old-rose);
+            }
+
+            .header h1 {
+                font-size: 3.2rem;
+                margin-bottom: 12px;
+                color: var(--old-rose);
+                text-transform: uppercase;
+                letter-spacing: 0.15em;
+                font-weight: 300;
+            }
+
+            .header p {
+                font-size: 1rem;
+                color: var(--medium-gray);
+                letter-spacing: 0.15em;
+                text-transform: uppercase;
+                font-weight: 300;
+            }
+
+            .btn {
+                display: inline-block;
+                padding: 12px 30px;
+                background-color: transparent;
+                color: var(--old-rose);
+                border: 1px solid var(--old-rose);
+                cursor: pointer;
+                font-family: 'Montserrat', sans-serif;
+                font-size: 0.85rem;
+                text-decoration: none;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                transition: all 0.3s ease;
+                margin-top: 15px;
+            }
+
+            .btn:hover {
+                background-color: var(--old-rose);
+                color: var(--white);
+            }
+
+            .btn-secondary {
+                border-color: var(--medium-gray);
+                color: var(--medium-gray);
+            }
+
+            .btn-secondary:hover {
+                background-color: var(--medium-gray);
+                color: var(--white);
+            }
+
+            .card {
+                background-color: var(--white);
+                padding: 40px;
+                margin-bottom: 30px;
+                position: relative;
+                border: 1px solid rgba(0, 0, 0, 0.05);
+                box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
+            }
+
+            .card h2 {
+                margin-bottom: 20px;
+                font-size: 2rem;
+                color: var(--old-rose);
+            }
+
+            .card p {
+                margin-bottom: 20px;
+                color: var(--medium-gray);
+                font-size: 0.95rem;
+            }
+
+            .form-group {
+                margin-bottom: 25px;
+            }
+
+            label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 400;
+                color: var(--old-rose);
+                font-size: 0.9rem;
+                letter-spacing: 0.05em;
+            }
+
+            input,
+            textarea {
+                width: 100%;
+                padding: 12px;
+                background-color: var(--light-gray);
+                border: 1px solid rgba(0, 0, 0, 0.05);
+                color: var(--dark-gray);
+                font-family: 'Montserrat', sans-serif;
+                font-size: 1rem;
+                transition: all 0.3s ease;
+            }
+
+            input:focus,
+            textarea:focus {
+                outline: none;
+                border-color: var(--old-rose);
+                background-color: var(--old-rose-ultra-light);
+            }
+
+            .error-message {
+                color: var(--old-rose-dark);
+                font-size: 0.85rem;
+                margin-top: 5px;
+            }
+
+            .messages {
+                list-style: none;
+                margin-bottom: 20px;
+            }
+
+            .messages li {
+                padding: 12px 15px;
+                margin-bottom: 15px;
+                border-left: 3px solid;
+                background-color: rgba(0, 0, 0, 0.02);
+            }
+
+            .messages .success {
+                border-color: #4caf50;
+                color: #3c763d;
+            }
+
+            .messages .error {
+                border-color: var(--old-rose);
+                color: var(--old-rose-dark);
+            }
+
+            .storage-info {
+                margin-top: 40px;
+                padding: 20px;
+                background-color: var(--light-gray);
+                border: 1px solid rgba(0, 0, 0, 0.05);
+            }
+
+            .storage-bar {
+                height: 4px;
+                background-color: rgba(0, 0, 0, 0.1);
+                margin-top: 15px;
+                overflow: hidden;
+            }
+
+            .storage-fill {
+                height: 100%;
+                background-color: var(--old-rose);
+                width: 0;
+                transition: width 0.3s ease;
+            }
+
+            .storage-warning .storage-fill {
+                background-color: #f0ad4e;
+            }
+
+            footer {
+                text-align: center;
+                padding: 40px 0;
+                margin-top: 100px;
+                border-top: 1px solid rgba(0, 0, 0, 0.05);
+                font-size: 0.8rem;
+                color: var(--medium-gray);
+                letter-spacing: 0.1em;
+            }
+
+            /* Film grain effect - lighter for light mode */
+            body::before {
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+                opacity: 0.02;
+                pointer-events: none;
+                z-index: 1000;
+            }
+
+            /* Enhanced Mobile Responsiveness */
+            @media (max-width: 768px) {
+                .header h1 {
+                    font-size: 2.5rem;
+                }
+
+                .container {
+                    width: 95%;
+                    padding: 20px 10px;
+                }
+
+                .card {
+                    padding: 30px 20px;
+                }
+
+                .btn {
+                    display: block;
+                    width: 100%;
+                    text-align: center;
+                    margin-bottom: 10px;
+                }
+
+                input,
+                textarea {
+                    font-size: 16px;
+                    /* Prevents zoom on focus in iOS */
+                }
+            }
+
+            @media (max-width: 480px) {
+                .header {
+                    padding: 40px 0 30px;
+                }
+
+                .header h1 {
+                    font-size: 2rem;
+                }
+
+                .card h2 {
+                    font-size: 1.8rem;
+                }
+
+                .header::after {
+                    width: 40px;
+                }
+            }
+        </style>
+        {% block extra_head %}{% endblock %}
+    </head>
+
+    <body>
+        <header class="header">
+            <div class="container">
+                <h1>Our Wedding</h1>
+                <p>Share your memories with us</p>
+            </div>
+        </header>
+
+        <div class="container">
+            {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+
+        <footer>
+            <div class="container">
+                <p>WEDDING PHOTO GALLERY</p>
+            </div>
+        </footer>
+
+        {% block extra_scripts %}{% endblock %}
+    </body>
+
+</html>
