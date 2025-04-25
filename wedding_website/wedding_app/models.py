@@ -61,28 +61,33 @@ class WeddingUser(AbstractBaseUser):
     def has_module_perms(self, app_label):
         return self.is_admin
 
+# Replace your compress_image function in models.py with this improved version
+
 def compress_image(uploaded_image):
-    """Compress and resize image to save storage space"""
+    """Compress and resize image to save storage space while preserving aspect ratio"""
     img = Image.open(uploaded_image)
     
     # Calculate aspect ratio
     width, height = img.size
     aspect_ratio = width / height
     
-    # Resize to maximum dimensions while preserving aspect ratio
+    # Set maximum dimensions
     max_width = 1200
     max_height = 1200
     
+    # Resize to maximum dimensions while preserving aspect ratio
     if width > max_width or height > max_height:
-        if aspect_ratio > 1:
+        if aspect_ratio > 1:  # Landscape orientation
             new_width = max_width
             new_height = int(max_width / aspect_ratio)
-        else:
+        else:  # Portrait orientation
             new_height = max_height
             new_width = int(max_height * aspect_ratio)
+        
+        # Use high quality resampling
         img = img.resize((new_width, new_height), Image.LANCZOS)
     
-    # Save as optimized JPEG
+    # Save image
     output = BytesIO()
     
     # Get file format
@@ -113,14 +118,13 @@ def compress_image(uploaded_image):
         if img.mode != 'RGB':
             img = img.convert('RGB')
     
-    # If PNG, GIF, or BMP, convert to JPEG to save space
-    if file_format in ['PNG', 'GIF', 'BMP']:
-        img = img.convert('RGB')
-        file_format = 'JPEG'
-        file_extension = 'jpg'
+    # Save with better quality
+    if file_format == 'JPEG':
+        img.save(output, format=file_format, quality=85, optimize=True)
+    else:
+        # For PNG, don't convert to JPEG to maintain transparency
+        img.save(output, format=file_format, optimize=True)
     
-    # Save image
-    img.save(output, format=file_format, quality=75, optimize=True)
     output.seek(0)
     
     # Generate new filename
